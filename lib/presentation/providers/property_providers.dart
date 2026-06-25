@@ -5,7 +5,9 @@ import '../../domain/entities/property.dart';
 import '../../domain/entities/property_filter.dart';
 import '../../domain/repositories/property_repository.dart';
 
-final propertyLocalDataSourceProvider = Provider<PropertyLocalDataSource>((ref) {
+final propertyLocalDataSourceProvider = Provider<PropertyLocalDataSource>((
+  ref,
+) {
   return PropertyLocalDataSource();
 });
 
@@ -24,9 +26,10 @@ final featuredPropertiesProvider = FutureProvider<List<Property>>((ref) {
   return repository.getFeaturedProperties();
 });
 
-final propertyFilterProvider = StateNotifierProvider<PropertyFilterNotifier, PropertyFilter>((ref) {
-  return PropertyFilterNotifier();
-});
+final propertyFilterProvider =
+    StateNotifierProvider<PropertyFilterNotifier, PropertyFilter>((ref) {
+      return PropertyFilterNotifier();
+    });
 
 class PropertyFilterNotifier extends StateNotifier<PropertyFilter> {
   PropertyFilterNotifier() : super(const PropertyFilter());
@@ -35,7 +38,8 @@ class PropertyFilterNotifier extends StateNotifier<PropertyFilter> {
   void setType(String? type) => state = state.copyWith(type: type);
   void setMinPrice(double? price) => state = state.copyWith(minPrice: price);
   void setMaxPrice(double? price) => state = state.copyWith(maxPrice: price);
-  void setMinBedrooms(int? bedrooms) => state = state.copyWith(minBedrooms: bedrooms);
+  void setMinBedrooms(int? bedrooms) =>
+      state = state.copyWith(minBedrooms: bedrooms);
   void setSortBy(String? sortBy) => state = state.copyWith(sortBy: sortBy);
   void reset() => state = const PropertyFilter();
 }
@@ -55,7 +59,10 @@ final searchResultsProvider = FutureProvider<List<Property>>((ref) {
   return repository.searchProperties(query);
 });
 
-final propertyDetailProvider = FutureProvider.family<Property?, String>((ref, id) {
+final propertyDetailProvider = FutureProvider.family<Property?, String>((
+  ref,
+  id,
+) {
   final repository = ref.watch(propertyRepositoryProvider);
   return repository.getPropertyById(id);
 });

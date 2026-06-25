@@ -37,13 +37,20 @@ class ListingPage extends ConsumerWidget {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.home_work_outlined, size: 64, color: AppTheme.textTertiary),
+                        const Icon(
+                          Icons.home_work_outlined,
+                          size: 64,
+                          color: AppTheme.textTertiary,
+                        ),
                         const SizedBox(height: 16),
-                        Text('No properties match your filters',
-                            style: Theme.of(context).textTheme.bodyMedium),
+                        Text(
+                          'No properties match your filters',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
                         const SizedBox(height: 8),
                         TextButton(
-                          onPressed: () => ref.read(propertyFilterProvider.notifier).reset(),
+                          onPressed: () =>
+                              ref.read(propertyFilterProvider.notifier).reset(),
                           child: const Text('Clear Filters'),
                         ),
                       ],
@@ -57,14 +64,16 @@ class ListingPage extends ConsumerWidget {
                     property: properties[index],
                     onTap: () => Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (_) => DetailPage(propertyId: properties[index].id),
+                        builder: (_) =>
+                            DetailPage(propertyId: properties[index].id),
                       ),
                     ),
                   ),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) => const Center(child: Text('Failed to load properties')),
+              error: (_, __) =>
+                  const Center(child: Text('Failed to load properties')),
             ),
           ),
         ],
@@ -72,7 +81,11 @@ class ListingPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildActiveFilters(BuildContext context, WidgetRef ref, PropertyFilter filter) {
+  Widget _buildActiveFilters(
+    BuildContext context,
+    WidgetRef ref,
+    PropertyFilter filter,
+  ) {
     return GlassContainer(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -84,7 +97,10 @@ class ListingPage extends ConsumerWidget {
           Expanded(
             child: Text(
               _filterDescription(filter),
-              style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
@@ -100,10 +116,12 @@ class ListingPage extends ConsumerWidget {
 
   String _filterDescription(PropertyFilter filter) {
     final parts = <String>[];
-    if (filter.type != null) parts.add(filter.type == 'sale' ? 'For Sale' : 'For Rent');
+    if (filter.type != null)
+      parts.add(filter.type == 'sale' ? 'For Sale' : 'For Rent');
     if (filter.minBedrooms != null) parts.add('${filter.minBedrooms}+ Beds');
     if (filter.minPrice != null) parts.add('\$${filter.minPrice! ~/ 1000}K+');
-    if (filter.maxPrice != null) parts.add('Up to \$${filter.maxPrice! ~/ 1000}K');
+    if (filter.maxPrice != null)
+      parts.add('Up to \$${filter.maxPrice! ~/ 1000}K');
     return parts.isNotEmpty ? parts.join(' · ') : 'Filters active';
   }
 
@@ -132,9 +150,19 @@ class ListingPage extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    const Text('Filters', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: AppTheme.textPrimary)),
+                    const Text(
+                      'Filters',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.textPrimary,
+                      ),
+                    ),
                     IconButton(
-                      icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                      icon: const Icon(
+                        Icons.close,
+                        color: AppTheme.textSecondary,
+                      ),
                       onPressed: () => Navigator.pop(context),
                     ),
                   ],
@@ -178,12 +206,20 @@ class ListingPage extends ConsumerWidget {
                       _buildFilterChip('Default', selectedSort == null, () {
                         setSheetState(() => selectedSort = null);
                       }),
-                      _buildFilterChip('Price: Low', selectedSort == 'price_asc', () {
-                        setSheetState(() => selectedSort = 'price_asc');
-                      }),
-                      _buildFilterChip('Price: High', selectedSort == 'price_desc', () {
-                        setSheetState(() => selectedSort = 'price_desc');
-                      }),
+                      _buildFilterChip(
+                        'Price: Low',
+                        selectedSort == 'price_asc',
+                        () {
+                          setSheetState(() => selectedSort = 'price_asc');
+                        },
+                      ),
+                      _buildFilterChip(
+                        'Price: High',
+                        selectedSort == 'price_desc',
+                        () {
+                          setSheetState(() => selectedSort = 'price_desc');
+                        },
+                      ),
                       _buildFilterChip('Newest', selectedSort == 'newest', () {
                         setSheetState(() => selectedSort = 'newest');
                       }),
@@ -198,7 +234,9 @@ class ListingPage extends ConsumerWidget {
                   height: 50,
                   child: ElevatedButton(
                     onPressed: () {
-                      final notifier = ref.read(propertyFilterProvider.notifier);
+                      final notifier = ref.read(
+                        propertyFilterProvider.notifier,
+                      );
                       notifier.setType(selectedType);
                       notifier.setMinBedrooms(selectedBedrooms);
                       notifier.setSortBy(selectedSort);
@@ -206,9 +244,17 @@ class ListingPage extends ConsumerWidget {
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
                     ),
-                    child: const Text('Apply Filters', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                    child: const Text(
+                      'Apply Filters',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -223,13 +269,16 @@ class ListingPage extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: AppTheme.textSecondary)),
-        const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: chips,
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.textSecondary,
+          ),
         ),
+        const SizedBox(height: 10),
+        Wrap(spacing: 8, runSpacing: 8, children: chips),
       ],
     );
   }

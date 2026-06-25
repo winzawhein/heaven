@@ -1,3 +1,4 @@
+import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,12 +10,50 @@ import '../widgets/glass_container.dart';
 import '../widgets/property_card.dart';
 import '../listing/listing_page.dart';
 import '../detail/detail_page.dart';
+import '../broker/broker_auth_page.dart';
 
-class HomePage extends ConsumerWidget {
+
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends ConsumerState<HomePage> {
+  final FocusNode _searchFocusNode = FocusNode();
+  TextEditingController _searchCtrl =TextEditingController();
+  bool _hasFocus = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchFocusNode.addListener(() {
+      if (!mounted) return;
+      setState(() => _hasFocus = _searchFocusNode.hasFocus);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchFocusNode.dispose();
+    super.dispose();
+  }
+
+
+  void _navigateToBrokerPortal(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const BrokerAuthPage(),
+      ),
+    );
+  }
+
+
+  @override
+  Widget build(BuildContext context) { 
+    final ref = this.ref;
+
     final featuredAsync = ref.watch(featuredPropertiesProvider);
     final searchResults = ref.watch(searchResultsProvider);
     final searchQuery = ref.watch(searchProvider);
@@ -33,10 +72,16 @@ class HomePage extends ConsumerWidget {
               flexibleSpace: FlexibleSpaceBar(
                 background: _buildHeader(context),
               ),
+              actions: [
+                IconButton(
+                  tooltip: 'Broker Portal',
+                  onPressed: () => _navigateToBrokerPortal(context),
+                  icon: const Icon(Icons.admin_panel_settings_outlined),
+                  color: AppTheme.textPrimary,
+                ),
+              ],
             ),
-            SliverToBoxAdapter(
-              child: _buildSearchBar(context, ref),
-            ),
+            SliverToBoxAdapter(child: _buildSearchBar(context, ref)),
             if (searchQuery.isNotEmpty)
               SliverToBoxAdapter(
                 child: Padding(
@@ -54,10 +99,16 @@ class HomePage extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Featured', style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        'Featured',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       TextButton(
                         onPressed: () => _navigateToListing(context, ref),
-                        child: const Text('See All', style: TextStyle(color: AppTheme.primaryColor)),
+                        child: const Text(
+                          'See All',
+                          style: TextStyle(color: AppTheme.primaryColor),
+                        ),
                       ),
                     ],
                   ),
@@ -71,10 +122,13 @@ class HomePage extends ConsumerWidget {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: properties.length,
-                      itemBuilder: (_, index) => _buildFeaturedCard(context, properties[index]),
+                      itemBuilder: (_, index) =>
+                          _buildFeaturedCard(context, properties[index]),
                     ),
-                    loading: () => const Center(child: CircularProgressIndicator()),
-                    error: (_, __) => const Center(child: Text('Failed to load')),
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (_, __) =>
+                        const Center(child: Text('Failed to load')),
                   ),
                 ),
               ),
@@ -84,14 +138,15 @@ class HomePage extends ConsumerWidget {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text('Categories', style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        'Categories',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                     ],
                   ),
                 ),
               ),
-              SliverToBoxAdapter(
-                child: _buildCategories(context, ref),
-              ),
+              SliverToBoxAdapter(child: _buildCategories(context, ref)),
             ],
             if (searchQuery.isNotEmpty)
               searchResults.when(
@@ -102,10 +157,16 @@ class HomePage extends ConsumerWidget {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(Icons.search_off, size: 64, color: AppTheme.textTertiary),
+                            const Icon(
+                              Icons.search_off,
+                              size: 64,
+                              color: AppTheme.textTertiary,
+                            ),
                             const SizedBox(height: 16),
-                            Text('No properties found for "$searchQuery"',
-                                style: Theme.of(context).textTheme.bodyMedium),
+                            Text(
+                              'No properties found for "$searchQuery"',
+                              style: Theme.of(context).textTheme.bodyMedium,
+                            ),
                           ],
                         ),
                       ),
@@ -115,14 +176,19 @@ class HomePage extends ConsumerWidget {
                     delegate: SliverChildBuilderDelegate(
                       (_, index) => PropertyCard(
                         property: properties[index],
-                        onTap: () => _navigateToDetail(context, properties[index]),
+                        onTap: () =>
+                            _navigateToDetail(context, properties[index]),
                       ),
                       childCount: properties.length,
                     ),
                   );
                 },
-                loading: () => const SliverFillRemaining(child: Center(child: CircularProgressIndicator())),
-                error: (_, __) => const SliverFillRemaining(child: Center(child: Text('Error'))),
+                loading: () => const SliverFillRemaining(
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+                error: (_, __) => const SliverFillRemaining(
+                  child: Center(child: Text('Error')),
+                ),
               )
             else
               SliverToBoxAdapter(
@@ -131,7 +197,10 @@ class HomePage extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Recent Listings', style: Theme.of(context).textTheme.titleLarge),
+                      Text(
+                        'Recent Listings',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
                       const SizedBox(height: 12),
                       _buildRecentListings(context, ref),
                     ],
@@ -154,8 +223,16 @@ class HomePage extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Find Your', style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppTheme.textTertiary)),
-              Text('Perfect Home', style: Theme.of(context).textTheme.displayMedium),
+              Text(
+                'Find Your',
+                style: Theme.of(
+                  context,
+                ).textTheme.titleMedium?.copyWith(color: AppTheme.textTertiary),
+              ),
+              Text(
+                'Perfect Home',
+                style: Theme.of(context).textTheme.displayMedium,
+              ),
             ],
           ),
           Container(
@@ -166,7 +243,10 @@ class HomePage extends ConsumerWidget {
               border: Border.all(color: AppTheme.glassBorder),
               color: AppTheme.glassLight,
             ),
-            child: const Icon(Icons.notifications_outlined, color: AppTheme.textPrimary),
+            child: const Icon(
+              Icons.notifications_outlined,
+              color: AppTheme.textPrimary,
+            ),
           ),
         ],
       ),
@@ -174,20 +254,65 @@ class HomePage extends ConsumerWidget {
   }
 
   Widget _buildSearchBar(BuildContext context, WidgetRef ref) {
+    final hintStyle = TextStyle(
+      color: AppTheme.textTertiary,
+      fontSize: 14,
+    );
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: GlassContainer(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
         borderRadius: BorderRadius.circular(14),
-        child: TextField(
-          style: const TextStyle(color: AppTheme.textPrimary),
-          decoration: const InputDecoration(
-            hintText: 'Search by location, property...',
-            hintStyle: TextStyle(color: AppTheme.textTertiary),
-            prefixIcon: Icon(Icons.search, color: AppTheme.textTertiary),
-            border: InputBorder.none,
-          ),
-          onChanged: (value) => ref.read(searchProvider.notifier).state = value,
+        child: Stack(
+          alignment: Alignment.centerLeft,
+          children: [
+            TextField(
+              style: const TextStyle(color: AppTheme.textPrimary),
+              focusNode: _searchFocusNode,
+              controller: _searchCtrl,
+              onChanged: (value) => ref.read(searchProvider.notifier).state = value,
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                // Hide default prefix icon to handle it custom or leave it here
+                prefixIcon: const Icon(Icons.search, color: AppTheme.textTertiary),
+                // Leave hintText completely empty when focused or when text is typed
+                // hintText: _hasFocus || ref.watch(searchProvider).isNotEmpty ? '' : null,
+                suffixIcon:ref.watch(searchProvider).isNotEmpty? IconButton(onPressed: (){
+                  ref.read(searchProvider.notifier).state= '';
+                  _searchCtrl.text ='';
+                  _searchFocusNode.unfocus();
+                }, icon: Icon(Icons.clear,color: AppTheme.textTertiary)) :SizedBox.shrink()
+              ),
+            ),
+            // Custom Animated Hint Text layer
+            if (
+              !_hasFocus 
+            && 
+            ref.watch(searchProvider).isEmpty
+            )
+              Positioned(
+                left: 48, // Aligns perfectly next to the prefix icon
+                child: IgnorePointer( // Allows taps to pass through to the TextField
+                  child: SizedBox(
+                    width: 250,
+                    child: DefaultTextStyle(
+                      style: hintStyle,
+                      child: AnimatedTextKit(
+                        repeatForever: true,
+                        pause: const Duration(milliseconds: 1000),
+                        animatedTexts: [
+                          TypewriterAnimatedText('Search by location...', speed: const Duration(milliseconds: 80)),
+                          TypewriterAnimatedText('Search by property...', speed: const Duration(milliseconds: 80)),
+                          TypewriterAnimatedText('Search by villa...', speed: const Duration(milliseconds: 80)),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
         ),
       ),
     );
@@ -208,15 +333,21 @@ class HomePage extends ConsumerWidget {
               Expanded(
                 flex: 3,
                 child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(16),
+                  ),
                   child: CachedNetworkImage(
                     imageUrl: property.images.first,
                     width: double.infinity,
                     fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
+                    placeholder: (_, __) =>
+                        Container(color: AppTheme.surfaceColor),
                     errorWidget: (_, __, ___) => Container(
                       color: AppTheme.surfaceColor,
-                      child: const Icon(Icons.broken_image, color: AppTheme.textTertiary),
+                      child: const Icon(
+                        Icons.broken_image,
+                        color: AppTheme.textTertiary,
+                      ),
                     ),
                   ),
                 ),
@@ -241,12 +372,19 @@ class HomePage extends ConsumerWidget {
                       const Spacer(),
                       Row(
                         children: [
-                          const Icon(Icons.location_on, size: 12, color: AppTheme.textTertiary),
+                          const Icon(
+                            Icons.location_on,
+                            size: 12,
+                            color: AppTheme.textTertiary,
+                          ),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
                               property.location,
-                              style: const TextStyle(fontSize: 11, color: AppTheme.textTertiary),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: AppTheme.textTertiary,
+                              ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -255,7 +393,10 @@ class HomePage extends ConsumerWidget {
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        FormatHelpers.formatPriceWithUnit(property.price, property.type),
+                        FormatHelpers.formatPriceWithUnit(
+                          property.price,
+                          property.type,
+                        ),
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
@@ -277,7 +418,11 @@ class HomePage extends ConsumerWidget {
     final categories = [
       {'icon': Icons.apartment, 'label': 'Apartment', 'type': null},
       {'icon': Icons.home_work_outlined, 'label': 'For Sale', 'type': 'sale'},
-      {'icon': Icons.meeting_room_outlined, 'label': 'For Rent', 'type': 'rent'},
+      {
+        'icon': Icons.meeting_room_outlined,
+        'label': 'For Rent',
+        'type': 'rent',
+      },
       {'icon': Icons.villa_outlined, 'label': 'Villa', 'type': null},
     ];
 
@@ -292,7 +437,9 @@ class HomePage extends ConsumerWidget {
           return GestureDetector(
             onTap: () {
               if (cat['type'] != null) {
-                ref.read(propertyFilterProvider.notifier).setType(cat['type'] as String);
+                ref
+                    .read(propertyFilterProvider.notifier)
+                    .setType(cat['type'] as String);
                 _navigateToListing(context, ref);
               } else {
                 _navigateToListing(context, ref);
@@ -307,11 +454,18 @@ class HomePage extends ConsumerWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(cat['icon'] as IconData, color: AppTheme.primaryColor, size: 28),
+                    Icon(
+                      cat['icon'] as IconData,
+                      color: AppTheme.primaryColor,
+                      size: 28,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       cat['label'] as String,
-                      style: const TextStyle(fontSize: 11, color: AppTheme.textSecondary),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                      ),
                       textAlign: TextAlign.center,
                       maxLines: 1,
                     ),
@@ -329,10 +483,14 @@ class HomePage extends ConsumerWidget {
     final propertiesAsync = ref.watch(propertiesProvider);
     return propertiesAsync.when(
       data: (properties) => Column(
-        children: properties.map((p) => PropertyCard(
-          property: p,
-          onTap: () => _navigateToDetail(context, p),
-        )).toList(),
+        children: properties
+            .map(
+              (p) => PropertyCard(
+                property: p,
+                onTap: () => _navigateToDetail(context, p),
+              ),
+            )
+            .toList(),
       ),
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (_, __) => const Center(child: Text('Failed to load listings')),
@@ -340,9 +498,9 @@ class HomePage extends ConsumerWidget {
   }
 
   void _navigateToListing(BuildContext context, WidgetRef ref) {
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ListingPage()),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const ListingPage()));
   }
 
   void _navigateToDetail(BuildContext context, Property property) {

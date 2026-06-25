@@ -18,19 +18,29 @@ class PropertyRepositoryImpl implements PropertyRepository {
         properties = properties.where((p) => p.type == filter.type).toList();
       }
       if (filter.minPrice != null) {
-        properties = properties.where((p) => p.price >= filter.minPrice!).toList();
+        properties = properties
+            .where((p) => p.price >= filter.minPrice!)
+            .toList();
       }
       if (filter.maxPrice != null) {
-        properties = properties.where((p) => p.price <= filter.maxPrice!).toList();
+        properties = properties
+            .where((p) => p.price <= filter.maxPrice!)
+            .toList();
       }
       if (filter.minBedrooms != null) {
-        properties = properties.where((p) => p.bedrooms >= filter.minBedrooms!).toList();
+        properties = properties
+            .where((p) => p.bedrooms >= filter.minBedrooms!)
+            .toList();
       }
       if (filter.query != null && filter.query!.isNotEmpty) {
         final query = filter.query!.toLowerCase();
-        properties = properties.where((p) =>
-            p.title.toLowerCase().contains(query) ||
-            p.location.toLowerCase().contains(query)).toList();
+        properties = properties
+            .where(
+              (p) =>
+                  p.title.toLowerCase().contains(query) ||
+                  p.location.toLowerCase().contains(query),
+            )
+            .toList();
       }
 
       switch (filter.sortBy) {

@@ -6,7 +6,8 @@ class PropertyLocalDataSource {
       PropertyModel(
         id: '1',
         title: 'Luxury Waterfront Apartment',
-        description: 'Stunning waterfront apartment with panoramic ocean views. Floor-to-ceiling windows, modern finishes, and a private balcony overlooking the marina. State-of-the-art kitchen with premium appliances.',
+        description:
+            'Stunning waterfront apartment with panoramic ocean views. Floor-to-ceiling windows, modern finishes, and a private balcony overlooking the marina. State-of-the-art kitchen with premium appliances.',
         price: 2500000,
         type: 'sale',
         bedrooms: 3,
@@ -23,7 +24,15 @@ class PropertyLocalDataSource {
         brokerName: 'Sarah Johnson',
         brokerPhone: '+14155550101',
         brokerPhoto: 'https://randomuser.me/api/portraits/women/44.jpg',
-        amenities: ['Swimming Pool', 'Gym', 'Parking', 'Security', 'Garden', 'Elevator', 'AC'],
+        amenities: [
+          'Swimming Pool',
+          'Gym',
+          'Parking',
+          'Security',
+          'Garden',
+          'Elevator',
+          'AC',
+        ],
         isFurnished: true,
         yearBuilt: 2022,
         listedDate: '2024-01-15',
@@ -32,7 +41,8 @@ class PropertyLocalDataSource {
       PropertyModel(
         id: '2',
         title: 'Modern Downtown Condo',
-        description: 'Sleek modern condo in the heart of downtown. Walking distance to restaurants, shops, and public transit. Open concept layout with premium hardwood floors and city views.',
+        description:
+            'Sleek modern condo in the heart of downtown. Walking distance to restaurants, shops, and public transit. Open concept layout with premium hardwood floors and city views.',
         price: 4500,
         type: 'rent',
         bedrooms: 2,
@@ -58,7 +68,8 @@ class PropertyLocalDataSource {
       PropertyModel(
         id: '3',
         title: 'Elegant Penthouse Suite',
-        description: 'Exquisite penthouse with panoramic skyline views. Private rooftop terrace, gourmet kitchen, spa-like bathrooms, and custom Italian marble finishes throughout.',
+        description:
+            'Exquisite penthouse with panoramic skyline views. Private rooftop terrace, gourmet kitchen, spa-like bathrooms, and custom Italian marble finishes throughout.',
         price: 5200000,
         type: 'sale',
         bedrooms: 4,
@@ -75,7 +86,16 @@ class PropertyLocalDataSource {
         brokerName: 'Emily Davis',
         brokerPhone: '+13105550303',
         brokerPhoto: 'https://randomuser.me/api/portraits/women/68.jpg',
-        amenities: ['Swimming Pool', 'Gym', 'Parking', 'Security', 'Garden', 'Elevator', 'AC', 'Storage'],
+        amenities: [
+          'Swimming Pool',
+          'Gym',
+          'Parking',
+          'Security',
+          'Garden',
+          'Elevator',
+          'AC',
+          'Storage',
+        ],
         isFurnished: true,
         yearBuilt: 2023,
         listedDate: '2024-01-20',
@@ -84,7 +104,8 @@ class PropertyLocalDataSource {
       PropertyModel(
         id: '4',
         title: 'Cozy Studio Apartment',
-        description: 'Charming studio in a quiet neighborhood. Recently renovated with modern fixtures, granite countertops, and hardwood floors. Perfect for young professionals.',
+        description:
+            'Charming studio in a quiet neighborhood. Recently renovated with modern fixtures, granite countertops, and hardwood floors. Perfect for young professionals.',
         price: 1800,
         type: 'rent',
         bedrooms: 1,
@@ -110,7 +131,8 @@ class PropertyLocalDataSource {
       PropertyModel(
         id: '5',
         title: 'Beachfront Villa',
-        description: 'Breathtaking beachfront villa with private access to white sand beach. Infinity pool, tropical garden, outdoor kitchen, and floor-to-ceiling glass walls.',
+        description:
+            'Breathtaking beachfront villa with private access to white sand beach. Infinity pool, tropical garden, outdoor kitchen, and floor-to-ceiling glass walls.',
         price: 7800000,
         type: 'sale',
         bedrooms: 5,
@@ -127,7 +149,15 @@ class PropertyLocalDataSource {
         brokerName: 'Jessica Williams',
         brokerPhone: '+13105550505',
         brokerPhoto: 'https://randomuser.me/api/portraits/women/26.jpg',
-        amenities: ['Swimming Pool', 'Gym', 'Parking', 'Security', 'Garden', 'AC', 'Heating'],
+        amenities: [
+          'Swimming Pool',
+          'Gym',
+          'Parking',
+          'Security',
+          'Garden',
+          'AC',
+          'Heating',
+        ],
         isFurnished: true,
         yearBuilt: 2021,
         listedDate: '2024-01-05',
@@ -136,7 +166,8 @@ class PropertyLocalDataSource {
       PropertyModel(
         id: '6',
         title: 'Urban Loft Space',
-        description: 'Industrial-chic loft with exposed brick walls, soaring ceilings, and oversized windows. Located in the vibrant arts district with galleries and cafes steps away.',
+        description:
+            'Industrial-chic loft with exposed brick walls, soaring ceilings, and oversized windows. Located in the vibrant arts district with galleries and cafes steps away.',
         price: 3200,
         type: 'rent',
         bedrooms: 1,
@@ -185,10 +216,12 @@ class PropertyLocalDataSource {
     await Future.delayed(const Duration(milliseconds: 300));
     final lowerQuery = query.toLowerCase();
     return _generateMockProperties()
-        .where((p) =>
-            p.title.toLowerCase().contains(lowerQuery) ||
-            p.location.toLowerCase().contains(lowerQuery) ||
-            p.description.toLowerCase().contains(lowerQuery))
+        .where(
+          (p) =>
+              p.title.toLowerCase().contains(lowerQuery) ||
+              p.location.toLowerCase().contains(lowerQuery) ||
+              p.description.toLowerCase().contains(lowerQuery),
+        )
         .toList();
   }
 }

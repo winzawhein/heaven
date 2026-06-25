@@ -13,15 +13,11 @@ extension ContextExtensions on BuildContext {
   ColorScheme get colorScheme => theme.colorScheme;
 
   void push(Widget page) {
-    Navigator.of(this).push(
-      MaterialPageRoute(builder: (_) => page),
-    );
+    Navigator.of(this).push(MaterialPageRoute(builder: (_) => page));
   }
 
   void pushReplacement(Widget page) {
-    Navigator.of(this).pushReplacement(
-      MaterialPageRoute(builder: (_) => page),
-    );
+    Navigator.of(this).pushReplacement(MaterialPageRoute(builder: (_) => page));
   }
 
   void pop([dynamic result]) => Navigator.of(this).pop(result);

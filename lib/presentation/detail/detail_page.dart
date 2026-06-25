@@ -38,9 +38,8 @@ class DetailPage extends ConsumerWidget {
           bottomNavigationBar: _buildBottomBar(context, property, callService),
         );
       },
-      loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      ),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (_, __) => Scaffold(
         appBar: AppBar(),
         body: const Center(child: Text('Failed to load property')),
@@ -65,7 +64,10 @@ class DetailPage extends ConsumerWidget {
                 placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
                 errorWidget: (_, __, ___) => Container(
                   color: AppTheme.surfaceColor,
-                  child: const Icon(Icons.broken_image, color: AppTheme.textTertiary),
+                  child: const Icon(
+                    Icons.broken_image,
+                    color: AppTheme.textTertiary,
+                  ),
                 ),
               ),
             ),
@@ -96,7 +98,9 @@ class DetailPage extends ConsumerWidget {
                     margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: index == 0 ? Colors.white : Colors.white.withValues(alpha: 0.4),
+                      color: index == 0
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.4),
                     ),
                   ),
                 ),
@@ -108,7 +112,11 @@ class DetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildContent(BuildContext context, Property property, CallService callService) {
+  Widget _buildContent(
+    BuildContext context,
+    Property property,
+    CallService callService,
+  ) {
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -130,7 +138,10 @@ class DetailPage extends ConsumerWidget {
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppTheme.primaryColor, Color(0xFF8B83FF)],
@@ -138,7 +149,10 @@ class DetailPage extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(14),
                 ),
                 child: Text(
-                  FormatHelpers.formatPriceWithUnit(property.price, property.type),
+                  FormatHelpers.formatPriceWithUnit(
+                    property.price,
+                    property.type,
+                  ),
                   style: const TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
@@ -153,12 +167,19 @@ class DetailPage extends ConsumerWidget {
           // Location
           Row(
             children: [
-              const Icon(Icons.location_on, size: 18, color: AppTheme.primaryColor),
+              const Icon(
+                Icons.location_on,
+                size: 18,
+                color: AppTheme.primaryColor,
+              ),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
                   property.location,
-                  style: const TextStyle(fontSize: 15, color: AppTheme.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 15,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               ),
             ],
@@ -172,14 +193,29 @@ class DetailPage extends ConsumerWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildStatItem(Icons.bed_outlined, '${property.bedrooms}', 'Bedrooms'),
+                _buildStatItem(
+                  Icons.bed_outlined,
+                  '${property.bedrooms}',
+                  'Bedrooms',
+                ),
                 _buildDivider(),
-                _buildStatItem(Icons.bathtub_outlined, '${property.bathrooms}', 'Bathrooms'),
+                _buildStatItem(
+                  Icons.bathtub_outlined,
+                  '${property.bathrooms}',
+                  'Bathrooms',
+                ),
                 _buildDivider(),
-                _buildStatItem(Icons.square_foot_outlined, 
-                    FormatHelpers.formatArea(property.area).split(' ').first, 'Sqft'),
+                _buildStatItem(
+                  Icons.square_foot_outlined,
+                  FormatHelpers.formatArea(property.area).split(' ').first,
+                  'Sqft',
+                ),
                 _buildDivider(),
-                _buildStatItem(Icons.calendar_today, '${property.yearBuilt}', 'Year'),
+                _buildStatItem(
+                  Icons.calendar_today,
+                  '${property.yearBuilt}',
+                  'Year',
+                ),
               ],
             ),
           ),
@@ -220,11 +256,17 @@ class DetailPage extends ConsumerWidget {
             runSpacing: 8,
             children: property.amenities.map((amenity) {
               return GlassContainer(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
                 borderRadius: BorderRadius.circular(20),
                 child: Text(
                   amenity,
-                  style: const TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                  ),
                 ),
               );
             }).toList(),
@@ -239,11 +281,18 @@ class DetailPage extends ConsumerWidget {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.check_circle, size: 18, color: AppTheme.secondaryColor),
+                  Icon(
+                    Icons.check_circle,
+                    size: 18,
+                    color: AppTheme.secondaryColor,
+                  ),
                   SizedBox(width: 8),
                   Text(
                     'Fully Furnished',
-                    style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.w500),
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ],
               ),
@@ -267,7 +316,9 @@ class DetailPage extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 28,
-                  backgroundImage: CachedNetworkImageProvider(property.brokerPhoto),
+                  backgroundImage: CachedNetworkImageProvider(
+                    property.brokerPhoto,
+                  ),
                   backgroundColor: AppTheme.surfaceColor,
                 ),
                 const SizedBox(width: 14),
@@ -296,13 +347,21 @@ class DetailPage extends ConsumerWidget {
                 ),
                 Row(
                   children: [
-                    _buildIconButton(Icons.phone_outlined, AppTheme.secondaryColor, () {
-                      callService.callBroker(property.brokerPhone);
-                    }),
+                    _buildIconButton(
+                      Icons.phone_outlined,
+                      AppTheme.secondaryColor,
+                      () {
+                        callService.callBroker(property.brokerPhone);
+                      },
+                    ),
                     const SizedBox(width: 8),
-                    _buildIconButton(Icons.chat_outlined, AppTheme.primaryColor, () {
-                      callService.sendWhatsApp(property.brokerPhone);
-                    }),
+                    _buildIconButton(
+                      Icons.chat_outlined,
+                      AppTheme.primaryColor,
+                      () {
+                        callService.sendWhatsApp(property.brokerPhone);
+                      },
+                    ),
                   ],
                 ),
               ],
@@ -330,21 +389,14 @@ class DetailPage extends ConsumerWidget {
         const SizedBox(height: 2),
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 11,
-            color: AppTheme.textTertiary,
-          ),
+          style: const TextStyle(fontSize: 11, color: AppTheme.textTertiary),
         ),
       ],
     );
   }
 
   Widget _buildDivider() {
-    return Container(
-      width: 1,
-      height: 40,
-      color: AppTheme.glassBorder,
-    );
+    return Container(width: 1, height: 40, color: AppTheme.glassBorder);
   }
 
   Widget _buildIconButton(IconData icon, Color color, VoidCallback onTap) {
@@ -362,7 +414,11 @@ class DetailPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildBottomBar(BuildContext context, Property property, CallService callService) {
+  Widget _buildBottomBar(
+    BuildContext context,
+    Property property,
+    CallService callService,
+  ) {
     return GlassContainer(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       margin: EdgeInsets.zero,
@@ -377,7 +433,10 @@ class DetailPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    FormatHelpers.formatPriceWithUnit(property.price, property.type),
+                    FormatHelpers.formatPriceWithUnit(
+                      property.price,
+                      property.type,
+                    ),
                     style: const TextStyle(
                       fontSize: 22,
                       fontWeight: FontWeight.bold,
@@ -387,7 +446,10 @@ class DetailPage extends ConsumerWidget {
                   const SizedBox(height: 2),
                   Text(
                     property.type == 'rent' ? 'per month' : 'total price',
-                    style: const TextStyle(fontSize: 12, color: AppTheme.textTertiary),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textTertiary,
+                    ),
                   ),
                 ],
               ),
@@ -395,7 +457,10 @@ class DetailPage extends ConsumerWidget {
             GestureDetector(
               onTap: () => _showContactSheet(context, property, callService),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 28,
+                  vertical: 14,
+                ),
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
                     colors: [AppTheme.primaryColor, Color(0xFF8B83FF)],
@@ -431,7 +496,11 @@ class DetailPage extends ConsumerWidget {
     );
   }
 
-  void _showContactSheet(BuildContext context, Property property, CallService callService) {
+  void _showContactSheet(
+    BuildContext context,
+    Property property,
+    CallService callService,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -470,7 +539,10 @@ class DetailPage extends ConsumerWidget {
             const SizedBox(height: 4),
             Text(
               FormatHelpers.formatPhone(property.brokerPhone),
-              style: const TextStyle(color: AppTheme.textTertiary, fontSize: 14),
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 14,
+              ),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -482,11 +554,16 @@ class DetailPage extends ConsumerWidget {
                   callService.callBroker(property.brokerPhone);
                 },
                 icon: const Icon(Icons.phone_in_talk),
-                label: const Text('Call Now', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                label: const Text(
+                  'Call Now',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.secondaryColor,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
@@ -500,18 +577,26 @@ class DetailPage extends ConsumerWidget {
                   callService.sendWhatsApp(property.brokerPhone);
                 },
                 icon: const Icon(Icons.chat),
-                label: const Text('WhatsApp', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+                label: const Text(
+                  'WhatsApp',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppTheme.primaryColor,
                   side: const BorderSide(color: AppTheme.primaryColor),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel', style: TextStyle(color: AppTheme.textTertiary)),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppTheme.textTertiary),
+              ),
             ),
             const SizedBox(height: 8),
           ],

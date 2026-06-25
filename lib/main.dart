@@ -10,16 +10,14 @@ void main() {
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-  ));
-
-  runApp(
-    const ProviderScope(
-      child: HeavenApp(),
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
     ),
   );
+
+  runApp(const ProviderScope(child: HeavenApp()));
 }
 
 class HeavenApp extends StatelessWidget {
