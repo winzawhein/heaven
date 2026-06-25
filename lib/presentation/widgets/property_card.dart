@@ -20,7 +20,7 @@ class PropertyCard extends ConsumerWidget {
       child: GlassContainer(
         padding: EdgeInsets.zero,
         borderRadius: BorderRadius.circular(16),
-        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        margin: const EdgeInsets.symmetric(vertical: 8),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

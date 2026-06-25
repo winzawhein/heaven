@@ -88,10 +88,11 @@ class ListingPage extends ConsumerWidget {
   ) {
     return GlassContainer(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       borderRadius: BorderRadius.circular(12),
       child: Row(
         children: [
+          const SizedBox(width: 8),
+
           const Icon(Icons.filter_alt, size: 16, color: AppTheme.primaryColor),
           const SizedBox(width: 8),
           Expanded(
@@ -252,6 +253,7 @@ class ListingPage extends ConsumerWidget {
                       'Apply Filters',
                       style: TextStyle(
                         fontSize: 16,
+                        color: AppTheme.textPrimary,
                         fontWeight: FontWeight.w600,
                       ),
                     ),

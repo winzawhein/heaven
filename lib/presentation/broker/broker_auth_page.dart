@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'package:firebase_auth/firebase_auth.dart';
+
+import '../../core/firebase/broker_auth_repository.dart';
 import '../../core/theme/app_theme.dart';
 import 'broker_property_upload_page.dart';
 
@@ -15,6 +18,7 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
   bool isSubmitting = false;
 
   final _formKey = GlobalKey<FormState>();
+  final _authRepo = const BrokerAuthRepository();
 
   // Sign up fields (for scaffolding only)
   final _nameCtrl = TextEditingController();
@@ -68,8 +72,8 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
                 Text(
                   'This UI is scaffolding only (no Firebase logic yet).',
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: AppTheme.textTertiary,
-                      ),
+                    color: AppTheme.textTertiary,
+                  ),
                 ),
                 const SizedBox(height: 20),
 
@@ -78,18 +82,16 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
                     controller: _nameCtrl,
                     label: 'Full name',
                     icon: Icons.person_outline,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Required'
-                        : null,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
                   _buildTextField(
                     controller: _agencyCtrl,
                     label: 'Agency name',
                     icon: Icons.business_outlined,
-                    validator: (v) => (v == null || v.trim().isEmpty)
-                        ? 'Required'
-                        : null,
+                    validator: (v) =>
+                        (v == null || v.trim().isEmpty) ? 'Required' : null,
                   ),
                   const SizedBox(height: 12),
                 ],
@@ -99,9 +101,8 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
                   label: 'Phone',
                   icon: Icons.phone_outlined,
                   keyboardType: TextInputType.phone,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Required'
-                      : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
 
@@ -110,9 +111,8 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
                   label: 'Email',
                   icon: Icons.email_outlined,
                   keyboardType: TextInputType.emailAddress,
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? 'Required'
-                      : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? 'Required' : null,
                 ),
                 const SizedBox(height: 12),
 
@@ -146,7 +146,8 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
                     onPressed: isSubmitting
                         ? null
                         : () async {
-                            final ok = _formKey.currentState?.validate() ?? false;
+                            final ok =
+                                _formKey.currentState?.validate() ?? false;
                             if (!ok) return;
 
                             setState(() => isSubmitting = true);
@@ -156,19 +157,35 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
                             if (!mounted) return;
                             setState(() => isSubmitting = false);
 
-                            // Scaffolding: navigate to upload page.
-                            if (!mounted) return;
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => const BrokerPropertyUploadPage(),
-                              ),
-                            );
+                            try {
+                              final email = _emailCtrl.text.trim();
+                              final password = _passwordCtrl.text;
 
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('Broker authenticated (mock).'),
-                              ),
-                            );
+                              if (!isLogin) {
+                                await _authRepo.signUp(
+                                  email: email,
+                                  password: password,
+                                );
+                              } else {
+                                await _authRepo.signIn(
+                                  email: email,
+                                  password: password,
+                                );
+                              }
+
+                              if (!mounted) return;
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) =>
+                                      const BrokerPropertyUploadPage(),
+                                ),
+                              );
+                            } on FirebaseAuthException catch (e) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.message ?? e.code)),
+                              );
+                            }
                           },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.primaryColor,
@@ -244,4 +261,3 @@ class _BrokerAuthPageState extends State<BrokerAuthPage> {
     );
   }
 }
-

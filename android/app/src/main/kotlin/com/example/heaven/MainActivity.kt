@@ -1,5 +1,6 @@
-package com.example.heaven
+package com.milo.heaven
 
 import io.flutter.embedding.android.FlutterActivity
 
-class MainActivity : FlutterActivity()
+class MainActivity: FlutterActivity() {
+}

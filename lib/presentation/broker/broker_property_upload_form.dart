@@ -6,10 +6,32 @@ class BrokerPropertyUploadForm extends StatefulWidget {
   const BrokerPropertyUploadForm({super.key});
 
   @override
-  State<BrokerPropertyUploadForm> createState() => _BrokerPropertyUploadFormState();
+  State<BrokerPropertyUploadForm> createState() => BrokerPropertyUploadFormState();
 }
 
-class _BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
+class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
+  // Expose the current form values for submission.
+  String get title => _titleCtrl.text.trim();
+  String get description => _descriptionCtrl.text.trim();
+  String get location => _locationCtrl.text.trim();
+
+  num get price => num.tryParse(_priceCtrl.text.trim()) ?? 0;
+  num get area => num.tryParse(_areaCtrl.text.trim()) ?? 0;
+  num get bedrooms => num.tryParse(_bedroomsCtrl.text.trim()) ?? 0;
+  num get bathrooms => num.tryParse(_bathroomsCtrl.text.trim()) ?? 0;
+  num get yearBuilt => num.tryParse(_yearBuiltCtrl.text.trim()) ?? 0;
+
+  String? get listedDate {
+    final v = _listedDateCtrl.text.trim();
+    return v.isEmpty ? null : v;
+  }
+
+  String get type => _type;
+  String get status => _status;
+  bool get isFurnished => _isFurnished;
+
+  List<String> get amenities => List.unmodifiable(_amenities);
+  List<String> get imageUrls => List.unmodifiable(_imageUrls);
   final _formKey = GlobalKey<FormState>();
 
   final _titleCtrl = TextEditingController();

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "566220420511",
+    "project_id": "haven-cd9df",
+    "storage_bucket": "haven-cd9df.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:566220420511:android:df41bb51857cd22aeaf9aa",
+        "android_client_info": {
+          "package_name": "com.milo.heaven"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBQ9-8bf-I66TPgPCCc6lxSHlOiuaUYfHk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

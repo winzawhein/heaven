@@ -449,7 +449,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               width: 80,
               margin: const EdgeInsets.symmetric(horizontal: 4),
               child: GlassContainer(
-                padding: const EdgeInsets.all(12),
+                // padding: const EdgeInsets.all(12),
                 borderRadius: BorderRadius.circular(14),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

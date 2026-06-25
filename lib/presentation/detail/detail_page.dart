@@ -8,14 +8,33 @@ import '../providers/property_providers.dart';
 import '../providers/call_provider.dart';
 import '../widgets/glass_container.dart';
 
-class DetailPage extends ConsumerWidget {
+class DetailPage extends ConsumerStatefulWidget {
   final String propertyId;
 
   const DetailPage({super.key, required this.propertyId});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final propertyAsync = ref.watch(propertyDetailProvider(propertyId));
+  ConsumerState<DetailPage> createState() => _DetailPageState();
+}
+
+class _DetailPageState extends ConsumerState<DetailPage> {
+  late final PageController _pageController;
+  int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+  @override
+  Widget build(BuildContext context) {
+    final propertyAsync = ref.watch(propertyDetailProvider(widget.propertyId));
     final callService = ref.read(callProvider);
 
     return propertyAsync.when(
@@ -48,42 +67,84 @@ class DetailPage extends ConsumerWidget {
   }
 
   Widget _buildImageSlider(BuildContext context, Property property) {
+    // We track a TransformationController to know if the user has zoomed in
+    final List<TransformationController> transformationControllers = List.generate(
+      property.images.length,
+      (_) => TransformationController(),
+    );
+
     return SliverAppBar(
       expandedHeight: 350,
       pinned: true,
       backgroundColor: AppTheme.backgroundColor,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
-          fit: StackFit.expand,
+          fit: StackFit.expand, // Restored this to make sure elements stretch properly
           children: [
             PageView.builder(
+              controller: _pageController,
               itemCount: property.images.length,
-              itemBuilder: (_, index) => CachedNetworkImage(
-                imageUrl: property.images[index],
-                fit: BoxFit.cover,
-                placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
-                errorWidget: (_, __, ___) => Container(
-                  color: AppTheme.surfaceColor,
-                  child: const Icon(
-                    Icons.broken_image,
-                    color: AppTheme.textTertiary,
+              // Dynamically disable PageView swiping ONLY when zoomed in
+              physics: _isZoomed(transformationControllers)
+                  ? const NeverScrollableScrollPhysics()
+                  : const BouncingScrollPhysics(),
+              onPageChanged: (index) {
+                setState(() => _currentPage = index);
+              },
+              itemBuilder: (_, index) {
+                return GestureDetector(
+                  // Double tap to quickly zoom in or reset
+                  onDoubleTap: () {
+                    final controller = transformationControllers[index];
+                    if (controller.value.isIdentity()) {
+                      controller.value = Matrix4.identity()..scale(2.0);
+                    } else {
+                      controller.value = Matrix4.identity();
+                    }
+                    setState(() {}); // Force physics check
+                  },
+                  child: InteractiveViewer(
+                    transformationController: transformationControllers[index],
+                    clipBehavior: Clip.antiAlias,
+                    minScale: 1.0,
+                    maxScale: 3.0,
+                    onInteractionEnd: (_) {
+                      // Check if the user returned the image to normal scale
+                      setState(() {});
+                    },
+                    child: CachedNetworkImage(
+                      imageUrl: property.images[index],
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
+                      errorWidget: (_, __, ___) => Container(
+                        color: AppTheme.surfaceColor, 
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: AppTheme.textTertiary,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+            // Gradient Overlay
+            IgnorePointer( // Crucial: prevents the gradient layout from stealing taps
+              child: Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black.withValues(alpha: 0.3),
+                      Colors.transparent,
+                      Colors.black.withValues(alpha: 0.6),
+                    ],
                   ),
                 ),
               ),
             ),
-            Container(
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.black.withValues(alpha: 0.3),
-                    Colors.transparent,
-                    Colors.black.withValues(alpha: 0.6),
-                  ],
-                ),
-              ),
-            ),
+            // Animated Indicator Dots
             Positioned(
               bottom: 16,
               left: 0,
@@ -92,13 +153,14 @@ class DetailPage extends ConsumerWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(
                   property.images.length,
-                  (index) => Container(
-                    width: 8,
+                  (index) => AnimatedContainer(
+                    duration: const Duration(milliseconds: 250),
+                    width: _currentPage == index ? 12 : 8,
                     height: 8,
                     margin: const EdgeInsets.symmetric(horizontal: 3),
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: index == 0
+                      borderRadius: BorderRadius.circular(4),
+                      color: _currentPage == index
                           ? Colors.white
                           : Colors.white.withValues(alpha: 0.4),
                     ),
@@ -110,6 +172,12 @@ class DetailPage extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  // Helper method to see if the current active image is zoomed in
+  bool _isZoomed(List<TransformationController> controllers) {
+    if (controllers.isEmpty || _currentPage >= controllers.length) return false;
+    return !controllers[_currentPage].value.isIdentity();
   }
 
   Widget _buildContent(
@@ -188,35 +256,37 @@ class DetailPage extends ConsumerWidget {
 
           // Stats row
           GlassContainer(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
             borderRadius: BorderRadius.circular(16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  Icons.bed_outlined,
-                  '${property.bedrooms}',
-                  'Bedrooms',
-                ),
-                _buildDivider(),
-                _buildStatItem(
-                  Icons.bathtub_outlined,
-                  '${property.bathrooms}',
-                  'Bathrooms',
-                ),
-                _buildDivider(),
-                _buildStatItem(
-                  Icons.square_foot_outlined,
-                  FormatHelpers.formatArea(property.area).split(' ').first,
-                  'Sqft',
-                ),
-                _buildDivider(),
-                _buildStatItem(
-                  Icons.calendar_today,
-                  '${property.yearBuilt}',
-                  'Year',
-                ),
-              ],
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 8,vertical: 10),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildStatItem(
+                    Icons.bed_outlined,
+                    '${property.bedrooms}',
+                    'Bedrooms',
+                  ),
+                  _buildDivider(),
+                  _buildStatItem(
+                    Icons.bathtub_outlined,
+                    '${property.bathrooms}',
+                    'Bathrooms',
+                  ),
+                  _buildDivider(),
+                  _buildStatItem(
+                    Icons.square_foot_outlined,
+                    FormatHelpers.formatArea(property.area).split(' ').first,
+                    'Sqft',
+                  ),
+                  _buildDivider(),
+                  _buildStatItem(
+                    Icons.calendar_today,
+                    '${property.yearBuilt}',
+                    'Year',
+                  ),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -256,16 +326,15 @@ class DetailPage extends ConsumerWidget {
             runSpacing: 8,
             children: property.amenities.map((amenity) {
               return GlassContainer(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 8,
-                ),
                 borderRadius: BorderRadius.circular(20),
-                child: Text(
-                  amenity,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textSecondary,
+                child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 14,vertical: 8),
+                  child: Text(
+                    amenity,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                    ),
                   ),
                 ),
               );
@@ -276,25 +345,27 @@ class DetailPage extends ConsumerWidget {
           // Furnished status
           if (property.isFurnished)
             GlassContainer(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               borderRadius: BorderRadius.circular(12),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.check_circle,
-                    size: 18,
-                    color: AppTheme.secondaryColor,
-                  ),
-                  SizedBox(width: 8),
-                  Text(
-                    'Fully Furnished',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontWeight: FontWeight.w500,
+              child: Padding(
+                padding : EdgeInsets.symmetric(horizontal: 14,vertical: 10),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.check_circle,
+                      size: 18,
+                      color: AppTheme.secondaryColor,
                     ),
-                  ),
-                ],
+                    SizedBox(width: 8),
+                    Text(
+                      'Fully Furnished',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           const SizedBox(height: 24),
@@ -310,61 +381,63 @@ class DetailPage extends ConsumerWidget {
           ),
           const SizedBox(height: 12),
           GlassContainer(
-            padding: const EdgeInsets.all(16),
             borderRadius: BorderRadius.circular(16),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 28,
-                  backgroundImage: CachedNetworkImageProvider(
-                    property.brokerPhoto,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 28,
+                    backgroundImage: CachedNetworkImageProvider(
+                      property.brokerPhoto,
+                    ),
+                    backgroundColor: AppTheme.surfaceColor,
                   ),
-                  backgroundColor: AppTheme.surfaceColor,
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          property.brokerName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Real Estate Agent',
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Row(
                     children: [
-                      Text(
-                        property.brokerName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 16,
-                          color: AppTheme.textPrimary,
-                        ),
+                      _buildIconButton(
+                        Icons.phone_outlined,
+                        AppTheme.secondaryColor,
+                        () {
+                          callService.callBroker(property.brokerPhone);
+                        },
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Real Estate Agent',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: AppTheme.textTertiary,
-                        ),
+                      const SizedBox(width: 8),
+                      _buildIconButton(
+                        Icons.chat_outlined,
+                        AppTheme.primaryColor,
+                        () {
+                          callService.sendWhatsApp(property.brokerPhone);
+                        },
                       ),
                     ],
                   ),
-                ),
-                Row(
-                  children: [
-                    _buildIconButton(
-                      Icons.phone_outlined,
-                      AppTheme.secondaryColor,
-                      () {
-                        callService.callBroker(property.brokerPhone);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    _buildIconButton(
-                      Icons.chat_outlined,
-                      AppTheme.primaryColor,
-                      () {
-                        callService.sendWhatsApp(property.brokerPhone);
-                      },
-                    ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 40),
@@ -420,77 +493,79 @@ class DetailPage extends ConsumerWidget {
     CallService callService,
   ) {
     return GlassContainer(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
       margin: EdgeInsets.zero,
       borderRadius: BorderRadius.circular(0),
       child: SafeArea(
         top: false,
-        child: Row(
-          children: [
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    FormatHelpers.formatPriceWithUnit(
-                      property.price,
-                      property.type,
-                    ),
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryColor,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    property.type == 'rent' ? 'per month' : 'total price',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textTertiary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            GestureDetector(
-              onTap: () => _showContactSheet(context, property, callService),
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [AppTheme.primaryColor, Color(0xFF8B83FF)],
-                  ),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [
-                    BoxShadow(
-                      color: AppTheme.primaryColor.withValues(alpha: 0.4),
-                      blurRadius: 12,
-                      spreadRadius: -2,
-                    ),
-                  ],
-                ),
-                child: const Row(
+        child: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 20,vertical: 12),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.phone_in_talk, color: Colors.white, size: 18),
-                    SizedBox(width: 8),
                     Text(
-                      'Contact',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 15,
+                      FormatHelpers.formatPriceWithUnit(
+                        property.price,
+                        property.type,
+                      ),
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryColor,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      property.type == 'rent' ? 'per month' : 'total price',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textTertiary,
                       ),
                     ),
                   ],
                 ),
               ),
-            ),
-          ],
+              GestureDetector(
+                onTap: () => _showContactSheet(context, property, callService),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [AppTheme.primaryColor, Color(0xFF8B83FF)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppTheme.primaryColor.withValues(alpha: 0.4),
+                        blurRadius: 12,
+                        spreadRadius: -2,
+                      ),
+                    ],
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(Icons.phone_in_talk, color: Colors.white, size: 18),
+                      SizedBox(width: 8),
+                      Text(
+                        'Contact',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

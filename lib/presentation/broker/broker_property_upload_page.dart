@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../../core/firebase/broker_listings_repository.dart';
 import '../../core/theme/app_theme.dart';
+import '../../domain/entities/broker_listing_input.dart';
+
 import 'broker_property_upload_form.dart';
 
 class BrokerPropertyUploadPage extends StatefulWidget {
@@ -14,7 +17,10 @@ class BrokerPropertyUploadPage extends StatefulWidget {
 class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
   bool isSubmitting = false;
 
-  // Scaffolding: we only validate visually (no cross-widget validate wiring yet).
+  final _listingsRepo = const BrokerListingsRepository();
+
+  final _brokerFormKey = GlobalKey<BrokerPropertyUploadFormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -40,7 +46,7 @@ class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
               ),
               const SizedBox(height: 16),
 
-              const BrokerPropertyUploadForm(),
+              BrokerPropertyUploadForm(key: _brokerFormKey),
 
               const SizedBox(height: 22),
 
@@ -58,9 +64,48 @@ class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
                           if (!mounted) return;
                           setState(() => isSubmitting = false);
 
+                          final formState =
+                              _brokerFormKey.currentState as BrokerPropertyUploadFormState?;
+                          if (formState == null) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Form not ready'),
+                              ),
+                            );
+                            return;
+                          }
+
+                          final formValid = formState.validateAndGetValidity();
+                          if (!formValid) {
+                            if (!mounted) return;
+                            setState(() => isSubmitting = false);
+                            return;
+                          }
+
+                          final input = BrokerListingInput(
+                            title: formState.title,
+                            description: formState.description,
+                            price: formState.price,
+                            area: formState.area,
+                            bedrooms: formState.bedrooms,
+                            bathrooms: formState.bathrooms,
+                            location: formState.location,
+                            yearBuilt: formState.yearBuilt,
+                            listedDate: formState.listedDate,
+                            type: formState.type,
+                            status: formState.status,
+                            isFurnished: formState.isFurnished,
+                            amenities: formState.amenities,
+                            imageUrls: formState.imageUrls,
+                          );
+
+                          await _listingsRepo.createListing(input: input);
+
+                          if (!mounted) return;
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Property saved (mock).'),
+                              content: Text('Property saved'),
                             ),
                           );
                         },
