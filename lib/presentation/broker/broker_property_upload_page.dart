@@ -7,11 +7,11 @@ import '../../domain/entities/broker_listing_input.dart';
 import 'broker_property_upload_form.dart';
 
 class BrokerPropertyUploadPage extends StatefulWidget {
-
   const BrokerPropertyUploadPage({super.key});
 
   @override
-  State<BrokerPropertyUploadPage> createState() => _BrokerPropertyUploadPageState();
+  State<BrokerPropertyUploadPage> createState() =>
+      _BrokerPropertyUploadPageState();
 }
 
 class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
@@ -24,9 +24,7 @@ class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Upload Property'),
-      ),
+      appBar: AppBar(title: const Text('Upload Property')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -40,9 +38,9 @@ class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
               const SizedBox(height: 8),
               Text(
                 'No backend is connected yet. Submitting shows a mock success message.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: AppTheme.textTertiary,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppTheme.textTertiary),
               ),
               const SizedBox(height: 16),
 
@@ -57,58 +55,146 @@ class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
                   onPressed: isSubmitting
                       ? null
                       : () async {
-                          setState(() => isSubmitting = true);
-                          await Future<void>.delayed(
-                            const Duration(milliseconds: 700),
-                          );
-                          if (!mounted) return;
-                          setState(() => isSubmitting = false);
-
-                          final formState =
-                              _brokerFormKey.currentState as BrokerPropertyUploadFormState?;
+                          final formState = _brokerFormKey.currentState;
                           if (formState == null) {
-                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Form not ready')),
+                            );
+                            return;
+                          }
+
+                          // 1. Guard against submitting if an image is in the middle of uploading
+                          if (formState.isUploadingImage) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                content: Text('Form not ready'),
+                                content: Text(
+                                  'Please wait for your images to finish uploading.',
+                                ),
                               ),
                             );
                             return;
                           }
 
+                          // 2. Validate form text inputs
                           final formValid = formState.validateAndGetValidity();
-                          if (!formValid) {
-                            if (!mounted) return;
-                            setState(() => isSubmitting = false);
+                          if (!formValid) return;
+
+                          // 3. Optional Guard: Force at least one uploaded image before allowing submission
+                          if (formState.imageUrls.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Please add at least one property image.',
+                                ),
+                              ),
+                            );
                             return;
                           }
 
-                          final input = BrokerListingInput(
-                            title: formState.title,
-                            description: formState.description,
-                            price: formState.price,
-                            area: formState.area,
-                            bedrooms: formState.bedrooms,
-                            bathrooms: formState.bathrooms,
-                            location: formState.location,
-                            yearBuilt: formState.yearBuilt,
-                            listedDate: formState.listedDate,
-                            type: formState.type,
-                            status: formState.status,
-                            isFurnished: formState.isFurnished,
-                            amenities: formState.amenities,
-                            imageUrls: formState.imageUrls,
-                          );
+                          // Set state to loading to disable button and show indicator
+                          setState(() => isSubmitting = true);
 
-                          await _listingsRepo.createListing(input: input);
+                          try {
+                            // 4. Construct payload input using valid URL paths already on Firebase Storage
+                            final input = BrokerListingInput(
+                              title: formState.title,
+                              description: formState.description,
+                              price: formState.price,
+                              area: formState.area,
+                              bedrooms: formState.bedrooms,
+                              bathrooms: formState.bathrooms,
+                              location: formState.location,
+                              phone : formState.phone,
+                              yearBuilt: formState.yearBuilt,
+                              listedDate: formState.listedDate,
+                              type: formState.type,
+                              status: formState.status,
+                              isFurnished: formState.isFurnished,
+                              amenities: formState.amenities,
+                              imageUrls: formState
+                                  .imageUrls, // Public network image URLs from the form
+                            );
 
-                          if (!mounted) return;
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Property saved'),
-                            ),
-                          );
+                            // 5. Fire upload to Firestore collection
+                            await _listingsRepo.createListing(input: input);
+
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Property successfully saved!'),
+                              ),
+                            );
+
+                            // Optional: Clear form or pop back to home view upon success
+                            Navigator.of(context).pop();
+                          } catch (e) {
+                            if (!mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to save listing: $e'),
+                              ),
+                            );
+                          } finally {
+                            if (mounted) {
+                              setState(() => isSubmitting = false);
+                            }
+                          }
                         },
+                  // onPressed: isSubmitting
+                  //     ? null
+                  //     : () async {
+                  //         setState(() => isSubmitting = true);
+                  //         await Future<void>.delayed(
+                  //           const Duration(milliseconds: 700),
+                  //         );
+                  //         if (!mounted) return;
+                  //         setState(() => isSubmitting = false);
+
+                  //         final formState =
+                  //             _brokerFormKey.currentState as BrokerPropertyUploadFormState?;
+                  //         if (formState == null) {
+                  //           if (!mounted) return;
+                  //           ScaffoldMessenger.of(context).showSnackBar(
+                  //             const SnackBar(
+                  //               content: Text('Form not ready'),
+                  //             ),
+                  //           );
+                  //           return;
+                  //         }
+
+                  //         final formValid = formState.validateAndGetValidity();
+                  //         if (!formValid) {
+                  //           if (!mounted) return;
+                  //           setState(() => isSubmitting = false);
+                  //           return;
+                  //         }
+
+                  //         final input = BrokerListingInput(
+                  //           title: formState.title,
+                  //           description: formState.description,
+                  //           price: formState.price,
+                  //           area: formState.area,
+                  //           bedrooms: formState.bedrooms,
+                  //           bathrooms: formState.bathrooms,
+                  //           location: formState.location,
+                  //           yearBuilt: formState.yearBuilt,
+                  //           listedDate: formState.listedDate,
+                  //           type: formState.type,
+                  //           status: formState.status,
+                  //           isFurnished: formState.isFurnished,
+                  //           amenities: formState.amenities,
+                  //           imageUrls: formState.imageUrls,
+                  //         );
+
+                  //         await _listingsRepo.createListing(input: input);
+
+                  //         if (!mounted) return;
+                  //         ScaffoldMessenger.of(context).showSnackBar(
+                  //           const SnackBar(
+                  //             content: Text('Property saved'),
+                  //           ),
+                  //         );
+                  //       },
                   icon: isSubmitting
                       ? const SizedBox(
                           width: 18,
@@ -139,5 +225,3 @@ class _BrokerPropertyUploadPageState extends State<BrokerPropertyUploadPage> {
     );
   }
 }
-
-

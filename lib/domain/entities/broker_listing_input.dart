@@ -6,6 +6,7 @@ class BrokerListingInput {
   final num bedrooms;
   final num bathrooms;
   final String location;
+  final String phone;
   final num yearBuilt;
   final String? listedDate; // YYYY-MM-DD (optional)
 
@@ -24,6 +25,7 @@ class BrokerListingInput {
     required this.bedrooms,
     required this.bathrooms,
     required this.location,
+    required this.phone,
     required this.yearBuilt,
     required this.listedDate,
     required this.type,

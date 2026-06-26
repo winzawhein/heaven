@@ -13,6 +13,7 @@ class FirestoreKeys {
   static const bedrooms = 'bedrooms';
   static const bathrooms = 'bathrooms';
   static const location = 'location';
+  static const phone = 'phone';
   static const yearBuilt = 'yearBuilt';
   static const listedDate = 'listedDate';
 

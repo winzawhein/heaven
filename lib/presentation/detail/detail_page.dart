@@ -1,3 +1,4 @@
+import 'dart:convert'; // Added for base64Decode
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -32,6 +33,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     _pageController.dispose();
     super.dispose();
   }
+
   @override
   Widget build(BuildContext context) {
     final propertyAsync = ref.watch(propertyDetailProvider(widget.propertyId));
@@ -67,7 +69,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
   }
 
   Widget _buildImageSlider(BuildContext context, Property property) {
-    // We track a TransformationController to know if the user has zoomed in
     final List<TransformationController> transformationControllers = List.generate(
       property.images.length,
       (_) => TransformationController(),
@@ -79,21 +80,19 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       backgroundColor: AppTheme.backgroundColor,
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
-          fit: StackFit.expand, // Restored this to make sure elements stretch properly
+          fit: StackFit.expand,
           children: [
             PageView.builder(
               controller: _pageController,
               itemCount: property.images.length,
-              // Dynamically disable PageView swiping ONLY when zoomed in
               physics: _isZoomed(transformationControllers)
-                  ? const NeverScrollableScrollPhysics()
+                  ? const NeverScrollableScrollPhysics() // Lock paging when zoomed in
                   : const BouncingScrollPhysics(),
               onPageChanged: (index) {
                 setState(() => _currentPage = index);
               },
               itemBuilder: (_, index) {
                 return GestureDetector(
-                  // Double tap to quickly zoom in or reset
                   onDoubleTap: () {
                     final controller = transformationControllers[index];
                     if (controller.value.isIdentity()) {
@@ -101,35 +100,29 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                     } else {
                       controller.value = Matrix4.identity();
                     }
-                    setState(() {}); // Force physics check
+                    setState(() {}); 
                   },
                   child: InteractiveViewer(
                     transformationController: transformationControllers[index],
                     clipBehavior: Clip.antiAlias,
                     minScale: 1.0,
                     maxScale: 3.0,
+                    // CRITICAL FIX: Track user interaction scales dynamically
+                    onInteractionUpdate: (_) {
+                      if (!_isZoomed(transformationControllers)) {
+                        setState(() {});
+                      }
+                    },
                     onInteractionEnd: (_) {
-                      // Check if the user returned the image to normal scale
                       setState(() {});
                     },
-                    child: CachedNetworkImage(
-                      imageUrl: property.images[index],
-                      fit: BoxFit.cover,
-                      placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
-                      errorWidget: (_, __, ___) => Container(
-                        color: AppTheme.surfaceColor, 
-                        child: const Icon(
-                          Icons.broken_image,
-                          color: AppTheme.textTertiary,
-                        ),
-                      ),
-                    ),
+                    child: _buildSliderImage(property.images[index]),
                   ),
                 );
               },
             ),
             // Gradient Overlay
-            IgnorePointer( // Crucial: prevents the gradient layout from stealing taps
+            IgnorePointer(
               child: Container(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
@@ -174,7 +167,41 @@ class _DetailPageState extends ConsumerState<DetailPage> {
     );
   }
 
-  // Helper method to see if the current active image is zoomed in
+  // Adaptive component to display either base64 chunks or web URLs
+  Widget _buildSliderImage(String imageStr) {
+    if (imageStr.startsWith('data:image')) {
+      try {
+        final base64Data = imageStr.split(',').last;
+        return Image.memory(
+          base64Decode(base64Data),
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity,
+        );
+      } catch (e) {
+        return Container(
+          color: AppTheme.surfaceColor,
+          child: const Icon(Icons.broken_image, color: AppTheme.textTertiary),
+        );
+      }
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageStr,
+      fit: BoxFit.cover,
+      width: double.infinity,
+      height: double.infinity,
+      placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
+      errorWidget: (_, __, ___) => Container(
+        color: AppTheme.surfaceColor,
+        child: const Icon(
+          Icons.broken_image,
+          color: AppTheme.textTertiary,
+        ),
+      ),
+    );
+  }
+
   bool _isZoomed(List<TransformationController> controllers) {
     if (controllers.isEmpty || _currentPage >= controllers.length) return false;
     return !controllers[_currentPage].value.isIdentity();
@@ -190,7 +217,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Title & Price
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -231,8 +257,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // Location
           Row(
             children: [
               const Icon(
@@ -253,12 +277,10 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             ],
           ),
           const SizedBox(height: 20),
-
-          // Stats row
           GlassContainer(
             borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8,vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -290,8 +312,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Description
           const Text(
             'Description',
             style: TextStyle(
@@ -310,8 +330,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             ),
           ),
           const SizedBox(height: 24),
-
-          // Amenities
           const Text(
             'Amenities',
             style: TextStyle(
@@ -328,7 +346,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               return GlassContainer(
                 borderRadius: BorderRadius.circular(20),
                 child: Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14,vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                   child: Text(
                     amenity,
                     style: const TextStyle(
@@ -341,14 +359,12 @@ class _DetailPageState extends ConsumerState<DetailPage> {
             }).toList(),
           ),
           const SizedBox(height: 24),
-
-          // Furnished status
           if (property.isFurnished)
             GlassContainer(
               borderRadius: BorderRadius.circular(12),
-              child: Padding(
-                padding : EdgeInsets.symmetric(horizontal: 14,vertical: 10),
-                child: const Row(
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
@@ -369,8 +385,6 @@ class _DetailPageState extends ConsumerState<DetailPage> {
               ),
             ),
           const SizedBox(height: 24),
-
-          // Broker info
           const Text(
             'Listed by',
             style: TextStyle(
@@ -383,7 +397,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
           GlassContainer(
             borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               child: Row(
                 children: [
                   CircleAvatar(
@@ -407,9 +421,9 @@ class _DetailPageState extends ConsumerState<DetailPage> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        Text(
+                        const Text(
                           'Real Estate Agent',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
                             color: AppTheme.textTertiary,
                           ),
@@ -498,7 +512,7 @@ class _DetailPageState extends ConsumerState<DetailPage> {
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 20,vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             children: [
               Expanded(

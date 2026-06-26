@@ -5,17 +5,26 @@ import '../../domain/entities/property.dart';
 import '../../domain/entities/property_filter.dart';
 import '../../domain/repositories/property_repository.dart';
 
-final propertyLocalDataSourceProvider = Provider<PropertyLocalDataSource>((
-  ref,
-) {
-  return PropertyLocalDataSource();
+// final propertyLocalDataSourceProvider = Provider<PropertyLocalDataSource>((
+//   ref,
+// ) {
+//   return PropertyLocalDataSource();
+// });
+
+// final propertyRepositoryProvider = Provider<PropertyRepository>((ref) {
+//   final dataSource = ref.watch(propertyLocalDataSourceProvider);
+//   return PropertyRepositoryImpl(dataSource);
+// });
+// Change your data source provider initialization
+final propertyRemoteDataSourceProvider = Provider<PropertyRemoteDataSource>((ref) {
+  return PropertyRemoteDataSource();
 });
 
+// Update the repository to accept the remote data source wrapper
 final propertyRepositoryProvider = Provider<PropertyRepository>((ref) {
-  final dataSource = ref.watch(propertyLocalDataSourceProvider);
-  return PropertyRepositoryImpl(dataSource);
+  final dataSource = ref.watch(propertyRemoteDataSourceProvider);
+  return PropertyRepositoryImpl(dataSource); // Ensure PropertyRepositoryImpl accepts Remote instead of Local
 });
-
 final propertiesProvider = FutureProvider<List<Property>>((ref) {
   final repository = ref.watch(propertyRepositoryProvider);
   return repository.getProperties();

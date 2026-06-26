@@ -7,9 +7,7 @@ import 'firestore_keys.dart';
 class BrokerListingsRepository {
   const BrokerListingsRepository();
 
-  Future<void> createListing({
-    required BrokerListingInput input,
-  }) async {
+  Future<void> createListing({required BrokerListingInput input}) async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       throw StateError('Broker must be authenticated');
@@ -27,6 +25,7 @@ class BrokerListingsRepository {
       FirestoreKeys.bedrooms: input.bedrooms,
       FirestoreKeys.bathrooms: input.bathrooms,
       FirestoreKeys.location: input.location,
+      FirestoreKeys.phone: input.phone,
       FirestoreKeys.yearBuilt: input.yearBuilt,
       FirestoreKeys.listedDate: input.listedDate,
 
@@ -41,5 +40,23 @@ class BrokerListingsRepository {
         .collection(FirestoreKeys.listingsCollection)
         .add(payload);
   }
-}
 
+  //   Future<void> createListing({
+  //   required Map<String, dynamic> payload,
+  // }) async {
+  //   final user = FirebaseAuth.instance.currentUser;
+  //   if (user == null) {
+  //     throw StateError('Broker must be authenticated');
+  //   }
+
+  //   // Inject active security metadata safely prior to payload transit
+  //   final verifiedPayload = {
+  //     ...payload,
+  //     'brokerId': user.uid,
+  //     'brokerEmail': user.email,
+  //     'listedDate': DateTime.now().toIso8601String(),
+  //   };
+
+  //   await _firestore.collection('properties').add(verifiedPayload);
+  // }
+}

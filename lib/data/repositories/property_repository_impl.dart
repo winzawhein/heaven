@@ -4,7 +4,7 @@ import '../../domain/repositories/property_repository.dart';
 import '../datasources/property_local_datasource.dart';
 
 class PropertyRepositoryImpl implements PropertyRepository {
-  final PropertyLocalDataSource _localDataSource;
+  final PropertyRemoteDataSource _localDataSource;
 
   PropertyRepositoryImpl(this._localDataSource);
 

@@ -1,0 +1,27 @@
+{
+  "appTitle": "Heaven",
+  "brokerPortal": "Broker Portal",
+  "searchResults": "Search Results",
+  "featured": "Featured",
+  "seeAll": "See All",
+  "categories": "Categories",
+  "recentListings": "Recent Listings",
+  "noPropertiesFound": "No properties found for \"{query}\"",
+
+  "findYour": "Find Your",
+  "perfectHome": "Perfect Home",
+
+  "hintSearchByLocation": "Search by location...",
+  "hintSearchByProperty": "Search by property...",
+  "hintSearchByVilla": "Search by villa...",
+
+  "categoryApartment": "Apartment",
+  "categoryForSale": "For Sale",
+  "categoryForRent": "For Rent",
+  "categoryVilla": "Villa",
+
+  "statusAvailable": "Available",
+  "statusSale": "For Sale",
+  "statusRent": "For Rent"
+}
+

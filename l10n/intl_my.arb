@@ -1,0 +1,27 @@
+{
+  "appTitle": "Heaven",
+  "brokerPortal": "ဘရိုကာ ပေါ်တယ်",
+  "searchResults": "ရှာဖွေမှု ရလဒ်များ",
+  "featured": "အထူးရွေးချယ်မှု",
+  "seeAll": "အားလုံး ကြည့်ရန်",
+  "categories": "အမျိုးအစားများ",
+  "recentListings": "မကြာသေးမီ အိမ်ရာစာရင်းများ",
+  "noPropertiesFound": "\"{query}\" အတွက် အိမ်ရာများ မတွေ့ပါ။",
+
+  "findYour": "သင့်အိမ်ကိုရှာပါ",
+  "perfectHome": "ပြီးပြည့်စုံတဲ့ နေအိမ်",
+
+  "hintSearchByLocation": "နေရာအားဖြင့် ရှာဖွေပါ...",
+  "hintSearchByProperty": "အိမ်ရာအမျိုးအစားအားဖြင့် ရှာဖွေပါ...",
+  "hintSearchByVilla": "ဗီလာဖြင့် ရှာဖွေပါ...",
+
+  "categoryApartment": "တိုက်ခန်း",
+  "categoryForSale": "ရောင်းရန်",
+  "categoryForRent": "ငှားရန်",
+  "categoryVilla": "ဗီလာ",
+
+  "statusAvailable": "ရရှိနိုင်",
+  "statusSale": "ရောင်းရန်",
+  "statusRent": "ငှားရန်"
+}
+

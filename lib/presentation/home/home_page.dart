@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:animated_text_kit/animated_text_kit.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,13 +7,15 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/utils/format_helpers.dart';
 import '../../domain/entities/property.dart';
+import '../../l10n/app_localizations.dart';
+
+import '../providers/locale_provider.dart';
 import '../providers/property_providers.dart';
 import '../widgets/glass_container.dart';
 import '../widgets/property_card.dart';
 import '../listing/listing_page.dart';
 import '../detail/detail_page.dart';
 import '../broker/broker_auth_page.dart';
-
 
 class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
@@ -22,7 +26,7 @@ class HomePage extends ConsumerStatefulWidget {
 
 class _HomePageState extends ConsumerState<HomePage> {
   final FocusNode _searchFocusNode = FocusNode();
-  TextEditingController _searchCtrl =TextEditingController();
+  TextEditingController _searchCtrl = TextEditingController();
   bool _hasFocus = false;
 
   @override
@@ -40,18 +44,14 @@ class _HomePageState extends ConsumerState<HomePage> {
     super.dispose();
   }
 
-
   void _navigateToBrokerPortal(BuildContext context) {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const BrokerAuthPage(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const BrokerAuthPage()));
   }
 
-
   @override
-  Widget build(BuildContext context) { 
+  Widget build(BuildContext context) {
     final ref = this.ref;
 
     final featuredAsync = ref.watch(featuredPropertiesProvider);
@@ -73,8 +73,26 @@ class _HomePageState extends ConsumerState<HomePage> {
                 background: _buildHeader(context),
               ),
               actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(Icons.language, color: AppTheme.textPrimary),
+                  tooltip: 'Change Language',
+                  onSelected: (String languageCode) {
+                    ref
+                        .read(localeProvider.notifier)
+                        .changeLocale(languageCode);
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    const PopupMenuItem(value: 'en', child: Text('English')),
+                    const PopupMenuItem(
+                      value:
+                          'my', // Or your other supported localizations language codes
+                      child: Text('Myanmar'),
+                    ),
+                  ],
+                ),
                 IconButton(
-                  tooltip: 'Broker Portal',
+                  tooltip: AppLocalizations.of(context).brokerPortal,
+
                   onPressed: () => _navigateToBrokerPortal(context),
                   icon: const Icon(Icons.admin_panel_settings_outlined),
                   color: AppTheme.textPrimary,
@@ -87,7 +105,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16, 24, 16, 12),
                   child: Text(
-                    'Search Results',
+                    AppLocalizations.of(context).searchResults,
+
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                 ),
@@ -100,13 +119,14 @@ class _HomePageState extends ConsumerState<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Featured',
+                        AppLocalizations.of(context).featured,
+
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       TextButton(
                         onPressed: () => _navigateToListing(context, ref),
-                        child: const Text(
-                          'See All',
+                        child: Text(
+                          AppLocalizations.of(context).seeAll,
                           style: TextStyle(color: AppTheme.primaryColor),
                         ),
                       ),
@@ -122,13 +142,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       itemCount: properties.length,
-                      itemBuilder: (_, index) =>
-                          _buildFeaturedCard(context, properties[index]),
+                      itemBuilder: (_, index) => _buildFeaturedCard(
+                        context,
+                        properties[index],
+                        width: properties.length == 1
+                            ? MediaQuery.of(context).size.width -
+                                  (MediaQuery.of(context).size.width * 0.08)
+                            : null,
+                      ),
                     ),
                     loading: () =>
                         const Center(child: CircularProgressIndicator()),
-                    error: (_, __) =>
-                        const Center(child: Text('Failed to load')),
+                    error: (_, __) => const Center(child: Text('')),
                   ),
                 ),
               ),
@@ -139,7 +164,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Categories',
+                        AppLocalizations.of(context).categories,
+
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                     ],
@@ -156,6 +182,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
+
                           children: [
                             const Icon(
                               Icons.search_off,
@@ -164,7 +191,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                             ),
                             const SizedBox(height: 16),
                             Text(
-                              'No properties found for "$searchQuery"',
+                              AppLocalizations.of(
+                                context,
+                              ).noPropertiesFound(searchQuery),
                               style: Theme.of(context).textTheme.bodyMedium,
                             ),
                           ],
@@ -186,9 +215,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                 loading: () => const SliverFillRemaining(
                   child: Center(child: CircularProgressIndicator()),
                 ),
-                error: (_, __) => const SliverFillRemaining(
-                  child: Center(child: Text('Error')),
-                ),
+                error: (_, __) =>
+                    const SliverFillRemaining(child: Center(child: Text(''))),
               )
             else
               SliverToBoxAdapter(
@@ -198,7 +226,8 @@ class _HomePageState extends ConsumerState<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Recent Listings',
+                        AppLocalizations.of(context).recentListings,
+
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: 12),
@@ -214,6 +243,8 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildHeader(BuildContext context) {
+    final l10n = AppLocalizations.of(context);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 40, 16, 0),
       child: Row(
@@ -224,13 +255,15 @@ class _HomePageState extends ConsumerState<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Find Your',
+                l10n.findYour,
+
                 style: Theme.of(
                   context,
                 ).textTheme.titleMedium?.copyWith(color: AppTheme.textTertiary),
               ),
               Text(
-                'Perfect Home',
+                l10n.perfectHome,
+
                 style: Theme.of(context).textTheme.displayMedium,
               ),
             ],
@@ -254,10 +287,7 @@ class _HomePageState extends ConsumerState<HomePage> {
   }
 
   Widget _buildSearchBar(BuildContext context, WidgetRef ref) {
-    final hintStyle = TextStyle(
-      color: AppTheme.textTertiary,
-      fontSize: 14,
-    );
+    final hintStyle = TextStyle(color: AppTheme.textTertiary, fontSize: 14);
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -270,31 +300,40 @@ class _HomePageState extends ConsumerState<HomePage> {
               style: const TextStyle(color: AppTheme.textPrimary),
               focusNode: _searchFocusNode,
               controller: _searchCtrl,
-              onChanged: (value) => ref.read(searchProvider.notifier).state = value,
+              onChanged: (value) =>
+                  ref.read(searchProvider.notifier).state = value,
               decoration: InputDecoration(
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 14,
+                ),
                 // Hide default prefix icon to handle it custom or leave it here
-                prefixIcon: const Icon(Icons.search, color: AppTheme.textTertiary),
+                prefixIcon: const Icon(
+                  Icons.search,
+                  color: AppTheme.textTertiary,
+                ),
                 // Leave hintText completely empty when focused or when text is typed
                 // hintText: _hasFocus || ref.watch(searchProvider).isNotEmpty ? '' : null,
-                suffixIcon:ref.watch(searchProvider).isNotEmpty? IconButton(onPressed: (){
-                  ref.read(searchProvider.notifier).state= '';
-                  _searchCtrl.text ='';
-                  _searchFocusNode.unfocus();
-                }, icon: Icon(Icons.clear,color: AppTheme.textTertiary)) :SizedBox.shrink()
+                suffixIcon: ref.watch(searchProvider).isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          ref.read(searchProvider.notifier).state = '';
+                          _searchCtrl.text = '';
+                          _searchFocusNode.unfocus();
+                        },
+                        icon: Icon(Icons.clear, color: AppTheme.textTertiary),
+                      )
+                    : SizedBox.shrink(),
               ),
             ),
             // Custom Animated Hint Text layer
-            if (
-              !_hasFocus 
-            && 
-            ref.watch(searchProvider).isEmpty
-            )
+            if (!_hasFocus && ref.watch(searchProvider).isEmpty)
               Positioned(
                 left: 48, // Aligns perfectly next to the prefix icon
-                child: IgnorePointer( // Allows taps to pass through to the TextField
+                child: IgnorePointer(
+                  // Allows taps to pass through to the TextField
                   child: SizedBox(
                     width: 250,
                     child: DefaultTextStyle(
@@ -303,9 +342,21 @@ class _HomePageState extends ConsumerState<HomePage> {
                         repeatForever: true,
                         pause: const Duration(milliseconds: 1000),
                         animatedTexts: [
-                          TypewriterAnimatedText('Search by location...', speed: const Duration(milliseconds: 80)),
-                          TypewriterAnimatedText('Search by property...', speed: const Duration(milliseconds: 80)),
-                          TypewriterAnimatedText('Search by villa...', speed: const Duration(milliseconds: 80)),
+                          TypewriterAnimatedText(
+                            AppLocalizations.of(context).hintSearchByLocation,
+
+                            speed: const Duration(milliseconds: 80),
+                          ),
+                          TypewriterAnimatedText(
+                            AppLocalizations.of(context).hintSearchByProperty,
+
+                            speed: const Duration(milliseconds: 80),
+                          ),
+                          TypewriterAnimatedText(
+                            AppLocalizations.of(context).hintSearchByVilla,
+
+                            speed: const Duration(milliseconds: 80),
+                          ),
                         ],
                       ),
                     ),
@@ -318,11 +369,15 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildFeaturedCard(BuildContext context, Property property) {
+  Widget _buildFeaturedCard(
+    BuildContext context,
+    Property property, {
+    double? width,
+  }) {
     return GestureDetector(
       onTap: () => _navigateToDetail(context, property),
       child: Container(
-        width: 280,
+        width: width ?? 280,
         margin: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: GlassContainer(
           padding: EdgeInsets.zero,
@@ -330,28 +385,18 @@ class _HomePageState extends ConsumerState<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Expanded(
-                flex: 3,
-                child: ClipRRect(
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(16),
-                  ),
-                  child: CachedNetworkImage(
-                    imageUrl: property.images.first,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) =>
-                        Container(color: AppTheme.surfaceColor),
-                    errorWidget: (_, __, ___) => Container(
-                      color: AppTheme.surfaceColor,
-                      child: const Icon(
-                        Icons.broken_image,
-                        color: AppTheme.textTertiary,
-                      ),
+              if (property.images.isNotEmpty)
+                Expanded(
+                  flex: 4,
+                  child: ClipRRect(
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(16),
                     ),
+                    child: _buildCardImage(
+                      property.images.first,
+                    ), // Use the dynamic loader here
                   ),
                 ),
-              ),
               Expanded(
                 flex: 2,
                 child: Padding(
@@ -410,6 +455,36 @@ class _HomePageState extends ConsumerState<HomePage> {
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  // Add this helper method directly inside your _HomePageState class
+  Widget _buildCardImage(String imageStr) {
+    if (imageStr.startsWith('data:image')) {
+      try {
+        final base64Data = imageStr.split(',').last;
+        return Image.memory(
+          base64Decode(base64Data),
+          width: double.infinity,
+          fit: BoxFit.cover,
+        );
+      } catch (e) {
+        return Container(
+          color: AppTheme.surfaceColor,
+          child: const Icon(Icons.broken_image, color: AppTheme.textTertiary),
+        );
+      }
+    }
+
+    return CachedNetworkImage(
+      imageUrl: imageStr,
+      width: double.infinity,
+      fit: BoxFit.cover,
+      placeholder: (_, __) => Container(color: AppTheme.surfaceColor),
+      errorWidget: (_, __, ___) => Container(
+        color: AppTheme.surfaceColor,
+        child: const Icon(Icons.broken_image, color: AppTheme.textTertiary),
       ),
     );
   }

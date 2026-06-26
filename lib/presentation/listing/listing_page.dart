@@ -25,58 +25,61 @@ class ListingPage extends ConsumerWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          if (filter.hasActiveFilters)
-            _buildActiveFilters(context, ref, filter),
-          Expanded(
-            child: propertiesAsync.when(
-              data: (properties) {
-                if (properties.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const Icon(
-                          Icons.home_work_outlined,
-                          size: 64,
-                          color: AppTheme.textTertiary,
+      body: Padding(
+        padding: EdgeInsets.symmetric(horizontal: 15),
+        child: Column(
+          children: [
+            if (filter.hasActiveFilters)
+              _buildActiveFilters(context, ref, filter),
+            Expanded(
+              child: propertiesAsync.when(
+                data: (properties) {
+                  if (properties.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.home_work_outlined,
+                            size: 64,
+                            color: AppTheme.textTertiary,
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'No properties match your filters',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () =>
+                                ref.read(propertyFilterProvider.notifier).reset(),
+                            child: const Text('Clear Filters'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.only(bottom: 80),
+                    itemCount: properties.length,
+                    itemBuilder: (_, index) => PropertyCard(
+                      property: properties[index],
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              DetailPage(propertyId: properties[index].id),
                         ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'No properties match your filters',
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: () =>
-                              ref.read(propertyFilterProvider.notifier).reset(),
-                          child: const Text('Clear Filters'),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-                return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 80),
-                  itemCount: properties.length,
-                  itemBuilder: (_, index) => PropertyCard(
-                    property: properties[index],
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) =>
-                            DetailPage(propertyId: properties[index].id),
                       ),
                     ),
-                  ),
-                );
-              },
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (_, __) =>
-                  const Center(child: Text('Failed to load properties')),
+                  );
+                },
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (_, __) =>
+                    const Center(child: Text('Failed to load properties')),
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

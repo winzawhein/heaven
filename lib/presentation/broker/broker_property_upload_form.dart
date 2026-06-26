@@ -1,4 +1,12 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:io';
+import 'dart:typed_data';
+
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../core/theme/app_theme.dart';
 
@@ -6,7 +14,8 @@ class BrokerPropertyUploadForm extends StatefulWidget {
   const BrokerPropertyUploadForm({super.key});
 
   @override
-  State<BrokerPropertyUploadForm> createState() => BrokerPropertyUploadFormState();
+  State<BrokerPropertyUploadForm> createState() =>
+      BrokerPropertyUploadFormState();
 }
 
 class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
@@ -14,6 +23,7 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
   String get title => _titleCtrl.text.trim();
   String get description => _descriptionCtrl.text.trim();
   String get location => _locationCtrl.text.trim();
+  String get phone => _phoneCtrl.text.trim();
 
   num get price => num.tryParse(_priceCtrl.text.trim()) ?? 0;
   num get area => num.tryParse(_areaCtrl.text.trim()) ?? 0;
@@ -32,6 +42,7 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
 
   List<String> get amenities => List.unmodifiable(_amenities);
   List<String> get imageUrls => List.unmodifiable(_imageUrls);
+  bool get isUploadingImage => _isUploadingImage;
   final _formKey = GlobalKey<FormState>();
 
   final _titleCtrl = TextEditingController();
@@ -41,6 +52,8 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
   final _bathroomsCtrl = TextEditingController(text: '1');
   final _areaCtrl = TextEditingController();
   final _locationCtrl = TextEditingController();
+  final _phoneCtrl = TextEditingController();
+
   final _yearBuiltCtrl = TextEditingController(text: '2024');
   final _listedDateCtrl = TextEditingController();
 
@@ -63,11 +76,82 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
     _bathroomsCtrl.dispose();
     _areaCtrl.dispose();
     _locationCtrl.dispose();
+    _phoneCtrl.dispose();
     _yearBuiltCtrl.dispose();
     _listedDateCtrl.dispose();
     _amenityDraftCtrl.dispose();
     _imageDraftCtrl.dispose();
     super.dispose();
+  }
+
+  bool _isUploadingImage =
+      false; // Tracks loading state while file transfers to storage
+  final ImagePicker _picker = ImagePicker();
+
+  // Function to handle image source selection and file staging
+  Future<void> _pickAndUploadImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality:
+            70, // Keep quality slightly lower (60-70) to prevent hitting Firestore document size limits
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      // 1. Read file bytes locally
+      final Uint8List imageBytes = await pickedFile.readAsBytes();
+
+      // 2. Convert bytes to a Base64 String
+      final String base64String = base64Encode(imageBytes);
+
+      // 3. Create a valid Data URI string that image widgets can render
+      final String dataUri = 'data:image/jpeg;base64,$base64String';
+
+      setState(() {
+        _imageUrls.add(dataUri); // Adds the text string straight to your list
+        _isUploadingImage = false;
+      });
+    } catch (e) {
+      setState(() => _isUploadingImage = false);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to process image: $e')));
+    }
+  }
+
+  void _showImageSourceActionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) => SafeArea(
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Photo Gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadImage(ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Camera'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadImage(ImageSource.camera);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -82,7 +166,8 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
             controller: _titleCtrl,
             label: 'Title',
             icon: Icons.apartment_outlined,
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 12),
           _buildTextField(
@@ -90,7 +175,8 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
             label: 'Description',
             icon: Icons.description_outlined,
             maxLines: 5,
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
           const SizedBox(height: 12),
 
@@ -116,7 +202,10 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
                   value: _status,
                   decoration: _dropdownDecoration('Status'),
                   items: const [
-                    DropdownMenuItem(value: 'available', child: Text('Available')),
+                    DropdownMenuItem(
+                      value: 'available',
+                      child: Text('Available'),
+                    ),
                     DropdownMenuItem(value: 'pending', child: Text('Pending')),
                     DropdownMenuItem(value: 'sold', child: Text('Sold')),
                   ],
@@ -142,7 +231,8 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
                     final num? parsed = v == null || v.trim().isEmpty
                         ? null
                         : num.tryParse(v.trim());
-                    if (parsed == null || parsed <= 0) return 'Enter a valid price';
+                    if (parsed == null || parsed <= 0)
+                      return 'Enter a valid price';
                     return null;
                   },
                 ),
@@ -157,7 +247,8 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
                     final num? parsed = v == null || v.trim().isEmpty
                         ? null
                         : num.tryParse(v.trim());
-                    if (parsed == null || parsed <= 0) return 'Enter a valid area';
+                    if (parsed == null || parsed <= 0)
+                      return 'Enter a valid area';
                     return null;
                   },
                 ),
@@ -207,10 +298,19 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
             controller: _locationCtrl,
             label: 'Location',
             icon: Icons.location_on_outlined,
-            validator: (v) => (v == null || v.trim().isEmpty) ? 'Required' : null,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Required' : null,
           ),
 
           const SizedBox(height: 12),
+          _buildTextField(
+            controller: _phoneCtrl,
+            label: 'Contact',
+            icon: Icons.phone,
+            validator: (v) =>
+                (v == null || v.trim().isEmpty) ? 'Required' : null,
+          ),
+          const SizedBox(height: 14),
 
           Row(
             children: [
@@ -297,54 +397,134 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
           ),
 
           const SizedBox(height: 20),
-
-          _SectionTitle(label: 'Images (URL list)'),
+          _SectionTitle(label: 'Property Images'),
           const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: _buildTextField(
-                  controller: _imageDraftCtrl,
-                  label: 'Image URL',
-                  icon: Icons.image_outlined,
+
+          // Media Action Upload Button Layout
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: _isUploadingImage
+                  ? null
+                  : () => _showImageSourceActionSheet(context),
+              icon: _isUploadingImage
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.add_a_photo_outlined),
+              label: Text(
+                _isUploadingImage
+                    ? 'Uploading to storage...'
+                    : 'Add Image from Device',
+              ),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              const SizedBox(width: 10),
-              IconButton(
-                onPressed: () {
-                  final val = _imageDraftCtrl.text.trim();
-                  if (val.isEmpty) return;
-                  setState(() {
-                    _imageUrls.add(val);
-                    _imageDraftCtrl.clear();
-                  });
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Horizontal Preview gallery grid showing loaded assets
+          if (_imageUrls.isNotEmpty)
+            SizedBox(
+              height: 90,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                itemCount: _imageUrls.length,
+                itemBuilder: (context, index) {
+                  return Stack(
+                    children: [
+                      _buildPropertyImage(_imageUrls[index]),
+                      // Container(
+                      //   width: 90,
+                      //   height: 90,
+                      //   margin: const EdgeInsets.only(right: 8),
+                      //   decoration: BoxDecoration(
+                      //     borderRadius: BorderRadius.circular(12),
+                      //     image: DecorationImage(
+                      //       image: NetworkImage(_imageUrls[index]),
+                      //       fit: BoxFit.cover,
+                      //     ),
+                      //   ),
+                      // ),
+                      Positioned(
+                        top: 2,
+                        right: 10,
+                        child: GestureDetector(
+                          onTap: () =>
+                              setState(() => _imageUrls.removeAt(index)),
+                          child: Container(
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            padding: const EdgeInsets.all(4),
+                            child: const Icon(
+                              Icons.close,
+                              size: 14,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  );
                 },
-                icon: const Icon(Icons.add_circle),
-                color: AppTheme.primaryColor,
               ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: _imageUrls
-                .map(
-                  (url) => Chip(
-                    label: Text(
-                      url.length > 20 ? '${url.substring(0, 20)}…' : url,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    backgroundColor: AppTheme.surfaceColor,
-                    deleteIcon: const Icon(Icons.close),
-                    onDeleted: () {
-                      setState(() => _imageUrls.remove(url));
-                    },
-                  ),
-                )
-                .toList(),
-          ),
+            ),
+
+          // _SectionTitle(label: 'Images (URL list)'),
+          // const SizedBox(height: 10),
+          // Row(
+          //   children: [
+          //     Expanded(
+          //       child: _buildTextField(
+          //         controller: _imageDraftCtrl,
+          //         label: 'Image URL',
+          //         icon: Icons.image_outlined,
+          //       ),
+          //     ),
+          //     const SizedBox(width: 10),
+          //     IconButton(
+          //       onPressed: () {
+          //         final val = _imageDraftCtrl.text.trim();
+          //         if (val.isEmpty) return;
+          //         setState(() {
+          //           _imageUrls.add(val);
+          //           _imageDraftCtrl.clear();
+          //         });
+          //       },
+          //       icon: const Icon(Icons.add_circle),
+          //       color: AppTheme.primaryColor,
+          //     ),
+          //   ],
+          // ),
+          // const SizedBox(height: 10),
+          // Wrap(
+          //   spacing: 8,
+          //   runSpacing: 8,
+          //   children: _imageUrls
+          //       .map(
+          //         (url) => Chip(
+          //           label: Text(
+          //             url.length > 20 ? '${url.substring(0, 20)}…' : url,
+          //             maxLines: 1,
+          //             overflow: TextOverflow.ellipsis,
+          //           ),
+          //           backgroundColor: AppTheme.surfaceColor,
+          //           deleteIcon: const Icon(Icons.close),
+          //           onDeleted: () {
+          //             setState(() => _imageUrls.remove(url));
+          //           },
+          //         ),
+          //       )
+          //       .toList(),
+          // ),
 
           // Keep accessors through a global form submit; actual data extraction
           // happens in the parent via GlobalKey state pattern not needed here.
@@ -357,6 +537,38 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
   // Allow parent to validate and show errors.
   bool validateAndGetValidity() {
     return _formKey.currentState?.validate() ?? false;
+  }
+
+  Widget _buildPropertyImage(String imageStr) {
+    // 1. Check if the string is a local Base64 string
+    if (imageStr.startsWith('data:image')) {
+      final base64Data = imageStr.split(',').last;
+      return Container(
+        width: 90,
+        height: 90,
+        margin: const EdgeInsets.only(right: 8),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.memory(base64Decode(base64Data), fit: BoxFit.cover),
+        ),
+      );
+    }
+
+    // 2. Otherwise, fallback to your standard network/cached loader
+    return Container(
+      width: 90,
+      height: 90,
+      margin: const EdgeInsets.only(right: 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: CachedNetworkImage(
+          imageUrl: imageStr,
+          fit: BoxFit.cover,
+          placeholder: (_, __) => Container(color: Colors.grey[300]),
+          errorWidget: (_, __, ___) => const Icon(Icons.broken_image),
+        ),
+      ),
+    );
   }
 
   InputDecoration _inputDecoration({
@@ -380,10 +592,7 @@ class BrokerPropertyUploadFormState extends State<BrokerPropertyUploadForm> {
         borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide(color: AppTheme.primaryColor),
       ),
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 14,
-        vertical: 14,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
     );
   }
 
@@ -444,4 +653,3 @@ class _SectionTitle extends StatelessWidget {
     );
   }
 }
-
